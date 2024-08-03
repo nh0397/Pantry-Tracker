@@ -1,0 +1,23 @@
+/* src/app/dashboard/Dashboard.module.css */
+
+.appBar {
+    background-color: white;
+    color: black;
+  }
+  
+  .logo {
+    height: 40px;
+    margin-right: 10px;
+    border-radius: 50px;
+  }
+  
+  .toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .title {
+    flex-grow: 1;
+  }
+  
