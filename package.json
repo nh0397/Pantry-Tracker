@@ -13,7 +13,10 @@
     "@emotion/styled": "^11.13.0",
     "@mui/icons-material": "^5.16.6",
     "@mui/material": "^5.16.6",
+<<<<<<< HEAD
     "firebase": "^10.12.5",
+=======
+>>>>>>> 03808669c84b23d157a2b677cd72c3a0b6c77b92
     "next": "14.2.5",
     "react": "^18",
     "react-dom": "^18"
