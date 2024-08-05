@@ -1,39 +1,38 @@
 "use client";
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { AppBar, Toolbar, Typography, Button, Container, Box, Grid, Card, CardContent, CardMedia, LinearProgress, IconButton, TextField, MenuItem, Select, FormControl, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, RadioGroup, FormControlLabel, Radio, Dialog, DialogActions, DialogContent, DialogTitle, CircularProgress } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Container, Box, Grid, Card, CardContent, CardMedia, LinearProgress, IconButton, CircularProgress, Dialog, DialogContent, DialogTitle, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Select, MenuItem, FormControl, RadioGroup, FormControlLabel, Radio, InputBase } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import HomeIcon from '@mui/icons-material/Home';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import SearchIcon from '@mui/icons-material/Search';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import Webcam from 'react-webcam';
-import { db } from '../firebase';
-import { collection, getDocs, addDoc } from 'firebase/firestore';
 import styles from './Dashboard.module.css';
 
 const Dashboard = () => {
   const router = useRouter();
   const [activeScreen, setActiveScreen] = useState('dashboard');
   const [pantryItems, setPantryItems] = useState([]);
+  const [filteredItems, setFilteredItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [items, setItems] = useState([{ name: '', quantity: '', maxQuantity: '', variant: 'solid', measure: '', unit: 'g' }]);
+  const [items, setItems] = useState([{ name: '', quantity: '', maxQuantity: '', variant: 'solid', measure: '', unit: 'g', image: '' }]);
   const [inputMethod, setInputMethod] = useState('manual');
   const [openCamera, setOpenCamera] = useState(false);
   const [capturedImage, setCapturedImage] = useState(null);
   const [loadingImage, setLoadingImage] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const webcamRef = useRef(null);
 
   const fetchPantryItems = async () => {
     setLoading(true); // Start loading
     try {
-      const querySnapshot = await getDocs(collection(db, 'inventory'));
-      const items = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const response = await fetch('/api/fetchPantryItems');
+      const items = await response.json();
       setPantryItems(items);
+      setFilteredItems(items);
     } catch (error) {
       console.error("Error fetching pantry items: ", error);
     } finally {
@@ -60,7 +59,7 @@ const Dashboard = () => {
   };
 
   const handleAddRow = () => {
-    setItems([...items, { name: '', quantity: '', maxQuantity: '', variant: 'solid', measure: '', unit: 'g' }]);
+    setItems([...items, { name: '', quantity: '', maxQuantity: '', variant: 'solid', measure: '', unit: 'g', image: '' }]);
   };
 
   const handleInputChange = (index, field, value) => {
@@ -82,42 +81,67 @@ const Dashboard = () => {
     try {
       for (const item of items) {
         if (item.name && item.quantity && item.maxQuantity && item.measure) {
-          await addDoc(collection(db, 'inventory'), {
-            name: item.name,
-            quantity: parseFloat(item.quantity),
-            maxQuantity: parseFloat(item.maxQuantity),
-            variant: item.variant,
-            measure: item.measure,
-            unit: item.unit,
-            timestamp: new Date(),
+          await fetch('/api/addPantryItem', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(item),
           });
           console.log(`Item ${item.name} added successfully`);
         }
       }
-      setItems([{ name: '', quantity: '', maxQuantity: '', variant: 'solid', measure: '', unit: 'g' }]);
+      setItems([{ name: '', quantity: '', maxQuantity: '', variant: 'solid', measure: '', unit: 'g', image: '' }]);
+      fetchPantryItems(); // Refresh pantry items
     } catch (error) {
       console.error("Error adding items to Firestore:", error);
     }
   };
 
-  const handlePhotoCapture = useCallback(() => {
+  const handlePhotoCapture = useCallback(async () => {
     const imageSrc = webcamRef.current.getScreenshot();
     setCapturedImage(imageSrc);
     setLoadingImage(true);
     setOpenCamera(false);
 
-    setTimeout(() => {
-      runImageRecognition(imageSrc);
-      setLoadingImage(false);
-    }, 2000);
-  }, [webcamRef]);
+    try {
+      const response = await fetch('/api/vertexPrediction', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ image: imageSrc.split(',')[1] }), // Send base64 image without prefix
+      });
 
-  const runImageRecognition = (imageSrc) => {
-    setItems([{ name: 'Recognized Item', quantity: '1', maxQuantity: '5', variant: 'solid', measure: '500', unit: 'g' }]);
-  };
+      const result = await response.json();
+      console.log("Predictions:", result.predictions);
+
+      // Process and use the predictions as needed
+      // Example: auto-populate form fields
+
+    } catch (error) {
+      console.error('Error during image recognition:', error);
+    } finally {
+      setLoadingImage(false);
+    }
+  }, []);
 
   const isFormValid = () => {
     return items.some(item => item.name && item.quantity && item.maxQuantity && item.measure);
+  };
+
+  const handleSearch = (event) => {
+    setSearchQuery(event.target.value);
+    if (event.target.value === '') {
+      setFilteredItems(pantryItems);
+    } else {
+      setFilteredItems(pantryItems.filter(item => item.name.toLowerCase().includes(event.target.value.toLowerCase())));
+    }
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    setFilteredItems(pantryItems);
   };
 
   return (
@@ -155,6 +179,18 @@ const Dashboard = () => {
           </Box>
         </Toolbar>
       </AppBar>
+      <Box className={styles.searchBarContainer}>
+        <SearchIcon />
+        <InputBase
+          placeholder="Search…"
+          value={searchQuery}
+          onChange={handleSearch}
+          className={styles.searchInput}
+        />
+        <Button onClick={handleClearSearch} className={styles.clearButton}>
+          Clear Search
+        </Button>
+      </Box>
       <Container sx={{ padding: { xs: '8px', md: '16px 24px' } }}>
         <Box mt={2} mb={2}>
           {activeScreen === 'dashboard' && (
@@ -169,18 +205,18 @@ const Dashboard = () => {
                     Loading inventory...
                   </Typography>
                 </Box>
-              ) : pantryItems.length === 0 ? (
-                <Box textAlign="center" mt={4}>
-                  <Typography variant="h6" sx={{ fontSize: { xs: '1rem', sm: '1.5rem' } }}>
-                    Hey! Looks like your pantry is empty. Time to stock up!
+              ) : filteredItems.length === 0 ? (
+                <Box className={styles.noItemsMessage}>
+                  <Typography variant="h6">
+                    No such item in the inventory.
                   </Typography>
-                  <Button variant="contained" color="primary" sx={{ mt: 2 }} onClick={() => handleNavigation('add-item')}>
-                    Add Your First Item
+                  <Button variant="contained" color="primary" onClick={() => handleNavigation('add-item')}>
+                    Add New Item
                   </Button>
                 </Box>
               ) : (
                 <Grid container spacing={2}>
-                  {pantryItems.map(item => (
+                  {filteredItems.map(item => (
                     <Grid item xs={12} sm={6} md={3} key={item.id}>
                       <Card className={styles.card}>
                         <CardMedia
@@ -235,7 +271,7 @@ const Dashboard = () => {
 
               {inputMethod === 'manual' && (
                 <>
-                  <TableContainer component={Paper} sx={{ bgcolor: 'black' }}>
+                  <TableContainer component={Paper} sx={{ bgcolor: 'black', width: '100%' }}>
                     <Table>
                       <TableHead>
                         <TableRow>
@@ -246,6 +282,7 @@ const Dashboard = () => {
                           <TableCell sx={{ color: 'white' }}>Weight/Volume</TableCell>
                           <TableCell sx={{ color: 'white', width: '150px' }}>Unit</TableCell>
                           <TableCell sx={{ color: 'white' }}>Action</TableCell>
+                          <TableCell sx={{ color: 'white' }}>Image</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -320,6 +357,20 @@ const Dashboard = () => {
                                 <DeleteIcon />
                               </IconButton>
                             </TableCell>
+                            <TableCell>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => {
+                                  const file = e.target.files[0];
+                                  const reader = new FileReader();
+                                  reader.onloadend = () => {
+                                    handleInputChange(index, 'image', reader.result);
+                                  };
+                                  reader.readAsDataURL(file);
+                                }}
+                              />
+                            </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -363,16 +414,11 @@ const Dashboard = () => {
                         </Button>
                       </Box>
                     </DialogContent>
-                    <DialogActions>
-                      <Button onClick={() => setOpenCamera(false)} color="secondary">
-                        Cancel
-                      </Button>
-                    </DialogActions>
                   </Dialog>
 
                   {capturedImage && (
                     <>
-                      <Typography variant="h6" sx={{ mt: 2, color: 'white' }}>Captured Photo:</Typography>
+                      <Typography variant="h6" sx={{ mt: 2 }}>Captured Photo:</Typography>
                       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
                         <img src={capturedImage} alt="Captured" style={{ width: '100%', maxWidth: '300px' }} />
                       </Box>
@@ -382,14 +428,8 @@ const Dashboard = () => {
                   {loadingImage && (
                     <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
                       <CircularProgress color="secondary" />
-                      <Typography variant="body1" sx={{ ml: 2, color: 'white' }}>Processing image...</Typography>
+                      <Typography variant="body1" sx={{ ml: 2 }}>Processing image...</Typography>
                     </Box>
-                  )}
-
-                  {isFormValid() && (
-                    <Button variant="contained" color="secondary" onClick={handleSubmit} sx={{ mt: 2, ml: 2 }}>
-                      Submit Auto-Populated Item
-                    </Button>
                   )}
                 </>
               )}
