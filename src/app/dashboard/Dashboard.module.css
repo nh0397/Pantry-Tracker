@@ -1,65 +1,119 @@
 .appBar {
-    background-color: #333;
-  }
-  
-  .toolbar {
-    display: flex;
-    justify-content: space-between;
-    padding: 0 16px;
-  }
-  
-  .title {
-    display: flex;
-    align-items: center;
-  }
-  
-  .logo {
-    height: 40px;
-    margin-right: 10px;
-  }
-  
-  .searchBarContainer {
-    display: flex;
-    align-items: center;
-    padding: 8px 16px;
-    background-color: #444;
-  }
-  
-  .searchInput {
-    flex: 1;
-    color: white;
-    background-color: #555;
-    padding: 8px;
-    border: none;
-    outline: none;
-    border-radius: 4px;
-  }
-  
-  .clearButton {
-    margin-left: 8px;
-    color: white;
-    background-color: #777;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  
-  .clearButton:hover {
-    background-color: #999;
-  }
-  
-  .noItemsMessage {
-    text-align: center;
-    margin-top: 32px;
-  }
-  
-  .noItemsMessage h6 {
-    font-size: 1.5rem;
-    margin-bottom: 16px;
-  }
-  
-  .noItemsMessage button {
-    margin-top: 16px;
-  }
-  
+  background-color: #333;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 16px;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+}
+
+.logo {
+  height: 40px;
+  margin-right: 10px;
+}
+
+.searchBarContainer {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  background-color: #444;
+}
+
+.searchInput {
+  flex: 1;
+  color: white;
+  background-color: #555;
+  padding: 8px;
+  border: none;
+  outline: none;
+  border-radius: 4px;
+}
+
+.clearButton {
+  margin-left: 8px;
+  color: white;
+  background-color: #777;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.clearButton:hover {
+  background-color: #999;
+}
+
+.noItemsMessage {
+  text-align: center;
+  margin-top: 32px;
+}
+
+.noItemsMessage h6 {
+  font-size: 1.5rem;
+  margin-bottom: 16px;
+}
+
+.noItemsMessage button {
+  margin-top: 16px;
+}
+
+/* Manage Inventory Table Styles */
+.manageInventoryTable {
+  background-color: #333; /* Dark background for the table */
+  color: white; /* White text color */
+}
+
+.manageInventoryTable th,
+.manageInventoryTable td {
+  color: white !important; /* Ensure text in table header and cells is white */
+}
+
+.manageInventoryTable th {
+  border-bottom: 2px solid #555; /* Optional: Styling for the table header */
+}
+
+.manageInventoryTable td {
+  border-bottom: 1px solid #555; /* Optional: Styling for table rows */
+}
+
+.manageInventoryTable input,
+.manageInventoryTable select {
+  color: black; /* Black text color for input fields */
+  background-color: white; /* White background for input fields */
+}
+
+.manageInventoryTable input:focus,
+.manageInventoryTable select:focus {
+  border-color: #777; /* Focus border color */
+}
+
+/* Save and Edit Button Styles */
+.saveButton {
+  color: #4caf50; /* Green for Save */
+}
+
+.editButton {
+  color: #ff9800; /* Orange for Edit */
+}
+
+.deleteButton {
+  color: #f44336; /* Red for Delete */
+}
+
+.manageInventoryTable .MuiFormControlLabel-label {
+  color: white;
+}
+
+.manageInventoryTable .MuiSvgIcon-root {
+  color: white;
+}
+
+.saveButton, .editButton, .deleteButton {
+  color: white;
+}

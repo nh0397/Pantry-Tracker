@@ -26,10 +26,10 @@ import {
   TableHead,
   TableRow,
   Paper,
-  Select,
-  MenuItem,
+  Radio,
+  RadioGroup,
   FormControl,
-  InputBase,
+  FormControlLabel,
 } from "@mui/material";
 import { useRouter } from "next/navigation";
 import HomeIcon from "@mui/icons-material/Home";
@@ -37,8 +37,7 @@ import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
-import SearchIcon from "@mui/icons-material/Search"; 
-import CameraAltIcon from "@mui/icons-material/CameraAlt";
+import SearchIcon from "@mui/icons-material/Search";
 import Webcam from "react-webcam";
 import styles from "./Dashboard.module.css";
 import { db } from "../firebase";
@@ -68,7 +67,7 @@ const Dashboard = () => {
       image: "",
     },
   ]);
-  const [inputMethod, setInputMethod] = useState(null); // Updated to handle user's choice
+  const [inputMethod, setInputMethod] = useState(null); 
   const [openCamera, setOpenCamera] = useState(false);
   const [capturedImage, setCapturedImage] = useState(null);
   const [loadingImage, setLoadingImage] = useState(false);
@@ -108,7 +107,6 @@ const Dashboard = () => {
     setActiveScreen(screen);
   };
 
-  // Define the function to handle user's choice between capturing a photo or adding manually
   const handleCapturePhotoOption = (choice) => {
     setInputMethod(choice);
     if (choice === "photo") {
@@ -217,13 +215,16 @@ const Dashboard = () => {
           variant: "solid",
           measure: "",
           unit: "g",
-          image: capturedImage,
+          image: imageSrc, 
         }));
 
         setItems(newItems);
+      } else {
+        alert("Failed to recognize items. Please try again.");
       }
     } catch (error) {
       console.error("Error during image recognition:", error);
+      alert("Error during image recognition. Please try again.");
     } finally {
       setLoadingImage(false);
     }
@@ -370,7 +371,7 @@ const Dashboard = () => {
 
       <Box className={styles.searchBarContainer}>
         <SearchIcon />
-        <InputBase
+        <TextField
           placeholder="Search…"
           value={searchQuery}
           onChange={handleSearch}
@@ -423,11 +424,11 @@ const Dashboard = () => {
                     const filledPercentage =
                       (item.quantity / item.maxQuantity) * 100;
 
-                    let progressColor = "primary"; // Default color
+                    let progressColor = "primary"; 
                     if (filledPercentage < 15) {
-                      progressColor = "error"; // Red color for less than 15%
+                      progressColor = "error"; 
                     } else if (filledPercentage > 70) {
-                      progressColor = "success"; // Green color for more than 70%
+                      progressColor = "success"; 
                     }
 
                     return (
@@ -505,7 +506,7 @@ const Dashboard = () => {
                 Add Items
               </Typography>
               <Typography variant="body1" component="p" gutterBottom>
-                Do you want to capture a photo and auto-populate the items?
+                How would you like to add items?
               </Typography>
               <Box>
                 <Button
@@ -513,7 +514,7 @@ const Dashboard = () => {
                   color="primary"
                   onClick={() => handleCapturePhotoOption("photo")}
                 >
-                  Yes
+                  Capture a Photo
                 </Button>
                 <Button
                   variant="outlined"
@@ -521,24 +522,13 @@ const Dashboard = () => {
                   onClick={() => handleCapturePhotoOption("manual")}
                   sx={{ ml: 2 }}
                 >
-                  No, I'll add manually
+                  Add Manually
                 </Button>
               </Box>
 
               {/* Capture Photo and Populate Table */}
               {inputMethod === "photo" && (
                 <Box>
-                  <div style={{ marginBottom: "16px" }}>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      startIcon={<CameraAltIcon />}
-                      onClick={() => setOpenCamera(true)}
-                    >
-                      Capture Photo
-                    </Button>
-                  </div>
-
                   <Dialog
                     open={openCamera}
                     onClose={() => setOpenCamera(false)}
@@ -572,7 +562,7 @@ const Dashboard = () => {
                   {capturedImage && (
                     <>
                       <Typography variant="h6" sx={{ mt: 2 }}>
-                        Hey, this is what we recognized from your photo:
+                        Recognized items from your photo:
                       </Typography>
                       <TableContainer
                         component={Paper}
@@ -589,8 +579,9 @@ const Dashboard = () => {
                               <TableCell sx={{ color: "white" }}>Quantity</TableCell>
                               <TableCell sx={{ color: "white" }}>Variant</TableCell>
                               <TableCell sx={{ color: "white" }}>Weight/Volume</TableCell>
-                              <TableCell sx={{ color: "white", width: "150px" }}>Unit</TableCell>
+                              <TableCell sx={{ color: "white" }}>Unit</TableCell>
                               <TableCell sx={{ color: "white" }}>Image</TableCell>
+                              <TableCell sx={{ color: "white" }}>Action</TableCell>
                             </TableRow>
                           </TableHead>
                           <TableBody>
@@ -599,45 +590,123 @@ const Dashboard = () => {
                                 <TableCell>
                                   <TextField
                                     value={item.name}
+                                    onChange={(e) =>
+                                      handleInputChange(index, "name", e.target.value)
+                                    }
                                     fullWidth
                                     sx={{ backgroundColor: "white" }}
-                                    disabled
                                   />
                                 </TableCell>
                                 <TableCell>
                                   <TextField
                                     value={item.quantity}
+                                    onChange={(e) =>
+                                      handleInputChange(index, "quantity", e.target.value)
+                                    }
                                     fullWidth
                                     sx={{ backgroundColor: "white" }}
-                                    disabled
                                   />
                                 </TableCell>
                                 <TableCell>
-                                  <TextField
-                                    value={item.variant}
-                                    fullWidth
-                                    sx={{ backgroundColor: "white" }}
-                                    disabled
-                                  />
+                                  <FormControl component="fieldset">
+                                    <RadioGroup
+                                      row
+                                      aria-label="variant"
+                                      name={`variant-${index}`}
+                                      value={item.variant}
+                                      onChange={(e) =>
+                                        handleInputChange(index, "variant", e.target.value)
+                                      }
+                                    >
+                                      <FormControlLabel
+                                        value="solid"
+                                        control={<Radio sx={{ color: "white" }} />}
+                                        label="Solid"
+                                        sx={{ color: "white" }}
+                                      />
+                                      <FormControlLabel
+                                        value="liquid"
+                                        control={<Radio sx={{ color: "white" }} />}
+                                        label="Liquid"
+                                        sx={{ color: "white" }}
+                                      />
+                                    </RadioGroup>
+                                  </FormControl>
                                 </TableCell>
                                 <TableCell>
                                   <TextField
                                     value={item.measure}
+                                    label={
+                                      item.variant === "solid"
+                                        ? "Weight"
+                                        : "Volume"
+                                    }
+                                    onChange={(e) =>
+                                      handleInputChange(index, "measure", e.target.value)
+                                    }
                                     fullWidth
                                     sx={{ backgroundColor: "white" }}
-                                    disabled
-                                  />
-                                </TableCell>
-                                <TableCell sx={{ width: "150px" }}>
-                                  <TextField
-                                    value={item.unit}
-                                    fullWidth
-                                    sx={{ backgroundColor: "white" }}
-                                    disabled
                                   />
                                 </TableCell>
                                 <TableCell>
-                                  <img src={item.image} alt="Item" style={{ width: '50px', height: '50px' }} />
+                                  <FormControl component="fieldset">
+                                    <RadioGroup
+                                      row
+                                      aria-label="unit"
+                                      name={`unit-${index}`}
+                                      value={item.unit}
+                                      onChange={(e) =>
+                                        handleInputChange(index, "unit", e.target.value)
+                                      }
+                                    >
+                                      {item.variant === "solid" ? (
+                                        <>
+                                          <FormControlLabel
+                                            value="g"
+                                            control={<Radio sx={{ color: "white" }} />}
+                                            label="g"
+                                            sx={{ color: "white" }}
+                                          />
+                                          <FormControlLabel
+                                            value="kg"
+                                            control={<Radio sx={{ color: "white" }} />}
+                                            label="kg"
+                                            sx={{ color: "white" }}
+                                          />
+                                        </>
+                                      ) : (
+                                        <>
+                                          <FormControlLabel
+                                            value="ml"
+                                            control={<Radio sx={{ color: "white" }} />}
+                                            label="ml"
+                                            sx={{ color: "white" }}
+                                          />
+                                          <FormControlLabel
+                                            value="l"
+                                            control={<Radio sx={{ color: "white" }} />}
+                                            label="l"
+                                            sx={{ color: "white" }}
+                                          />
+                                        </>
+                                      )}
+                                    </RadioGroup>
+                                  </FormControl>
+                                </TableCell>
+                                <TableCell>
+                                  <img
+                                    src={item.image || capturedImage}
+                                    alt="Item"
+                                    style={{ width: "50px", height: "50px" }}
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <IconButton
+                                    onClick={() => handleRemoveRow(index)}
+                                    sx={{ color: "white" }}
+                                  >
+                                    <DeleteIcon />
+                                  </IconButton>
                                 </TableCell>
                               </TableRow>
                             ))}
@@ -664,9 +733,9 @@ const Dashboard = () => {
                           <TableCell sx={{ color: "white" }}>Max Quantity</TableCell>
                           <TableCell sx={{ color: "white" }}>Variant</TableCell>
                           <TableCell sx={{ color: "white" }}>Weight/Volume</TableCell>
-                          <TableCell sx={{ color: "white", width: "150px" }}>Unit</TableCell>
-                          <TableCell sx={{ color: "white" }}>Action</TableCell>
+                          <TableCell sx={{ color: "white" }}>Units</TableCell>
                           <TableCell sx={{ color: "white" }}>Image</TableCell>
+                          <TableCell sx={{ color: "white" }}>Action</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -703,27 +772,38 @@ const Dashboard = () => {
                               />
                             </TableCell>
                             <TableCell>
-                              <Select
-                                value={item.variant}
-                                onChange={(e) =>
-                                  handleInputChange(index, "variant", e.target.value)
-                                }
-                                fullWidth
-                                sx={{ backgroundColor: "white" }}
-                              >
-                                <MenuItem value="solid">
-                                  Solid (Weight)
-                                </MenuItem>
-                                <MenuItem value="liquid">
-                                  Liquid (Volume)
-                                </MenuItem>
-                              </Select>
+                              <FormControl component="fieldset">
+                                <RadioGroup
+                                  row
+                                  aria-label="variant"
+                                  name={`variant-${index}`}
+                                  value={item.variant}
+                                  onChange={(e) =>
+                                    handleInputChange(index, "variant", e.target.value)
+                                  }
+                                >
+                                  <FormControlLabel
+                                    value="solid"
+                                    control={<Radio sx={{ color: "white" }} />}
+                                    label="Solid"
+                                    sx={{ color: "white" }}
+                                  />
+                                  <FormControlLabel
+                                    value="liquid"
+                                    control={<Radio sx={{ color: "white" }} />}
+                                    label="Liquid"
+                                    sx={{ color: "white" }}
+                                  />
+                                </RadioGroup>
+                              </FormControl>
                             </TableCell>
                             <TableCell>
                               <TextField
                                 value={item.measure}
                                 label={
-                                  item.variant === "solid" ? "Weight" : "Volume"
+                                  item.variant === "solid"
+                                    ? "Weight"
+                                    : "Volume"
                                 }
                                 onChange={(e) =>
                                   handleInputChange(index, "measure", e.target.value)
@@ -732,35 +812,50 @@ const Dashboard = () => {
                                 sx={{ backgroundColor: "white" }}
                               />
                             </TableCell>
-                            <TableCell sx={{ width: "150px" }}>
-                              <Select
-                                value={item.unit}
-                                onChange={(e) =>
-                                  handleInputChange(index, "unit", e.target.value)
-                                }
-                                fullWidth
-                                sx={{ backgroundColor: "white" }}
-                              >
-                                {item.variant === "solid" ? (
-                                  <>
-                                    <MenuItem value="g">g</MenuItem>
-                                    <MenuItem value="kg">kg</MenuItem>
-                                  </>
-                                ) : (
-                                  <>
-                                    <MenuItem value="ml">ml</MenuItem>
-                                    <MenuItem value="l">l</MenuItem>
-                                  </>
-                                )}
-                              </Select>
-                            </TableCell>
                             <TableCell>
-                              <IconButton
-                                onClick={() => handleRemoveRow(index)}
-                                sx={{ color: "white" }}
-                              >
-                                <DeleteIcon />
-                              </IconButton>
+                              <FormControl component="fieldset">
+                                <RadioGroup
+                                  row
+                                  aria-label="unit"
+                                  name={`unit-${index}`}
+                                  value={item.unit}
+                                  onChange={(e) =>
+                                    handleInputChange(index, "unit", e.target.value)
+                                  }
+                                >
+                                  {item.variant === "solid" ? (
+                                    <>
+                                      <FormControlLabel
+                                        value="g"
+                                        control={<Radio sx={{ color: "white" }} />}
+                                        label="g"
+                                        sx={{ color: "white" }}
+                                      />
+                                      <FormControlLabel
+                                        value="kg"
+                                        control={<Radio sx={{ color: "white" }} />}
+                                        label="kg"
+                                        sx={{ color: "white" }}
+                                      />
+                                    </>
+                                  ) : (
+                                    <>
+                                      <FormControlLabel
+                                        value="ml"
+                                        control={<Radio sx={{ color: "white" }} />}
+                                        label="ml"
+                                        sx={{ color: "white" }}
+                                      />
+                                      <FormControlLabel
+                                        value="l"
+                                        control={<Radio sx={{ color: "white" }} />}
+                                        label="l"
+                                        sx={{ color: "white" }}
+                                      />
+                                    </>
+                                  )}
+                                </RadioGroup>
+                              </FormControl>
                             </TableCell>
                             <TableCell>
                               <input
@@ -779,6 +874,21 @@ const Dashboard = () => {
                                   reader.readAsDataURL(file);
                                 }}
                               />
+                              {item.image && (
+                                <img
+                                  src={item.image}
+                                  alt="Item"
+                                  style={{ width: "50px", height: "50px", marginTop: "10px" }}
+                                />
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <IconButton
+                                onClick={() => handleRemoveRow(index)}
+                                sx={{ color: "white" }}
+                              >
+                                <DeleteIcon />
+                              </IconButton>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -894,17 +1004,33 @@ const Dashboard = () => {
                         </TableCell>
                         <TableCell className={styles.tableCell}>
                           {editingItem?.id === item.id ? (
-                            <Select
-                              value={editingItem.variant}
-                              onChange={(e) =>
-                                handleEditInputChange("variant", e.target.value)
-                              }
-                              fullWidth
-                              sx={{ backgroundColor: "white" }}
-                            >
-                              <MenuItem value="solid">Solid (Weight)</MenuItem>
-                              <MenuItem value="liquid">Liquid (Volume)</MenuItem>
-                            </Select>
+                            <FormControl component="fieldset">
+                              <RadioGroup
+                                row
+                                aria-label="variant"
+                                name={`variant-${item.id}`}
+                                value={editingItem.variant}
+                                onChange={(e) =>
+                                  handleEditInputChange(
+                                    "variant",
+                                    e.target.value
+                                  )
+                                }
+                              >
+                                <FormControlLabel
+                                  value="solid"
+                                  control={<Radio sx={{ color: "white" }} />}
+                                  label="Solid"
+                                  sx={{ color: "white" }}
+                                />
+                                <FormControlLabel
+                                  value="liquid"
+                                  control={<Radio sx={{ color: "white" }} />}
+                                  label="Liquid"
+                                  sx={{ color: "white" }}
+                                />
+                              </RadioGroup>
+                            </FormControl>
                           ) : (
                             item.variant
                           )}
@@ -919,7 +1045,10 @@ const Dashboard = () => {
                                   : "Volume"
                               }
                               onChange={(e) =>
-                                handleEditInputChange("measure", e.target.value)
+                                handleEditInputChange(
+                                  "measure",
+                                  e.target.value
+                                )
                               }
                               sx={{ backgroundColor: "white" }}
                             />
@@ -929,51 +1058,82 @@ const Dashboard = () => {
                         </TableCell>
                         <TableCell className={styles.tableCell}>
                           {editingItem?.id === item.id ? (
-                            <Select
-                              value={editingItem.unit}
-                              onChange={(e) =>
-                                handleEditInputChange("unit", e.target.value)
-                              }
-                              fullWidth
-                              sx={{ backgroundColor: "white" }}
-                            >
-                              {editingItem.variant === "solid" ? (
-                                <>
-                                  <MenuItem value="g">g</MenuItem>
-                                  <MenuItem value="kg">kg</MenuItem>
-                                </>
-                              ) : (
-                                <>
-                                  <MenuItem value="ml">ml</MenuItem>
-                                  <MenuItem value="l">l</MenuItem>
-                                </>
-                              )}
-                            </Select>
+                            <FormControl component="fieldset">
+                              <RadioGroup
+                                row
+                                aria-label="unit"
+                                name={`unit-${item.id}`}
+                                value={editingItem.unit}
+                                onChange={(e) =>
+                                  handleEditInputChange("unit", e.target.value)
+                                }
+                              >
+                                {editingItem.variant === "solid" ? (
+                                  <>
+                                    <FormControlLabel
+                                      value="g"
+                                      control={<Radio sx={{ color: "white" }} />}
+                                      label="g"
+                                      sx={{ color: "white" }}
+                                    />
+                                    <FormControlLabel
+                                      value="kg"
+                                      control={<Radio sx={{ color: "white" }} />}
+                                      label="kg"
+                                      sx={{ color: "white" }}
+                                    />
+                                  </>
+                                ) : (
+                                  <>
+                                    <FormControlLabel
+                                      value="ml"
+                                      control={<Radio sx={{ color: "white" }} />}
+                                      label="ml"
+                                      sx={{ color: "white" }}
+                                    />
+                                    <FormControlLabel
+                                      value="l"
+                                      control={<Radio sx={{ color: "white" }} />}
+                                      label="l"
+                                      sx={{ color: "white" }}
+                                    />
+                                  </>
+                                )}
+                              </RadioGroup>
+                            </FormControl>
                           ) : (
                             item.unit
                           )}
                         </TableCell>
                         <TableCell className={styles.tableCell}>
                           {editingItem?.id === item.id ? (
-                            <IconButton
-                              onClick={handleSave}
-                              className={styles.saveButton}
-                            >
-                              <SaveIcon />
-                            </IconButton>
+                            <>
+                              <IconButton
+                                onClick={handleSave}
+                                className={styles.saveButton}
+                              >
+                                <SaveIcon style={{ color: "green" }} />
+                              </IconButton>
+                              <IconButton
+                                onClick={() => setEditingItem(null)}
+                                className={styles.cancelButton}
+                              >
+                                <DeleteIcon style={{ color: "red" }} />
+                              </IconButton>
+                            </>
                           ) : (
                             <IconButton
                               onClick={() => handleEdit(item)}
                               className={styles.editButton}
                             >
-                              <EditIcon />
+                              <EditIcon style={{ color: "blue" }} />
                             </IconButton>
                           )}
                           <IconButton
                             onClick={() => handleDelete(item.id)}
                             className={styles.deleteButton}
                           >
-                            <DeleteIcon />
+                            <DeleteIcon style={{ color: "red" }} />
                           </IconButton>
                         </TableCell>
                       </TableRow>
